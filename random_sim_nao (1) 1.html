@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Random Sim / Não — Mobile</title>
+  <style>
+    :root{
+      --accent: #FFB84D; /* amarelo levemente laranjado */
+      --dark: #111213;   /* preto bem escuro */
+      --darker-gray: #2a2a2a; /* cinza escuro */
+      --card-radius: 18px;
+      --safe-padding: 18px;
+    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:var(--accent);background:linear-gradient(180deg,var(--dark),#0f0f10);}
+    .wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(2 * var(--safe-padding));box-sizing:border-box}
+
+    .screen{width:100%;max-width:420px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));border-radius:22px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:18px}
+
+    .title{font-size:18px;color:var(--accent);text-align:center;font-weight:600}
+
+    .buttons{display:flex;gap:12px;justify-content:center}
+    .btn{
+      flex:1;padding:18px 10px;border-radius:14px;border:2px solid rgba(255,255,255,0.06);font-weight:700;font-size:20px;cursor:pointer;user-select:none;transition:transform .12s ease, box-shadow .12s ease;min-width:110px;text-align:center;background:transparent;color:var(--accent)
+    }
+    .btn:active{transform:translateY(2px)}
+
+    /* Visuals for the two option buttons (just decoration — the pick is random) */
+    .btn.sim{background:linear-gradient(180deg, rgba(255,184,77,0.12), rgba(255,184,77,0.06));box-shadow:0 6px 18px rgba(255,184,77,0.06);border:1px solid rgba(255,184,77,0.2);color:#0b0b0b}
+    .btn.nao{background:linear-gradient(180deg, rgba(42,42,42,0.6), rgba(26,26,26,0.6));box-shadow:inset 0 -3px 10px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);color:var(--accent)}
+
+    .result-card{height:160px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;padding:16px;text-align:center;color:var(--dark);background:var(--accent);box-shadow:0 12px 30px rgba(0,0,0,0.5);}
+    .result-card.nao{background:linear-gradient(180deg,#2a2a2a,#111);color:var(--accent)}
+
+    .sub{font-size:13px;color:#bdbdbd;text-align:center}
+
+    .small-btn{margin-top:6px;padding:10px 12px;border-radius:12px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent);font-weight:700;cursor:pointer}
+
+    /* animations */
+    .pulse{animation:pulse 650ms ease-out}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+    /* mobile friendly text sizing */
+    @media (max-width:420px){.result-card{height:140px;font-size:20px}.btn{font-size:18px;padding:16px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="screen" role="main" aria-label="Tela de sorteio">
+      <div class="title">Toque em **Sortear** para gerar o resultado</div>
+
+      <div style="display:flex;justify-content:center;">
+        <button class="btn sim" style="max-width:200px;width:100%;" onclick="doPick()" aria-label="Sortear">Sortear</button>
+      </div>
+
+      <div id="result" class="result-card" style="visibility:hidden;opacity:0;transition:opacity .28s ease, transform .28s ease">
+        <!-- result text injected by JS -->
+      </div>
+
+      <div class="sub">Se o resultado for <strong>Sim</strong> aparece: <em>Revista obrigatória</em>. Se der <strong>Não</strong>: <em>Saída liberada</em>.</div>
+
+      <div style="display:flex;justify-content:center">
+        <button id="again" class="small-btn" onclick="resetView()" style="display:none">Sortear novamente</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Ao clicar em qualquer botão, o sorteio é aleatório — ignoramos qual botão foi tocado.
+    function doPick(_pressed){
+      // botão dá feedback visual rápido
+      vibrateIfPossible();
+
+      const resultEl = document.getElementById('result');
+      const againBtn = document.getElementById('again');
+
+      // pequena animação de "pensando"
+      resultEl.style.visibility = 'visible';
+      resultEl.style.opacity = '0.9';
+      resultEl.classList.remove('nao');
+      resultEl.classList.add('pulse');
+      resultEl.textContent = '...';
+      againBtn.style.display = 'none';
+
+      setTimeout(() => {
+        // escolha aleatória com 50/50
+        const pick = Math.random() < 0.5 ? 'SIM' : 'NÃO';
+
+        if(pick === 'SIM'){
+          resultEl.textContent = 'Revista obrigatória';
+          // estilo: card amarelo
+          resultEl.classList.remove('nao');
+          resultEl.style.color = 'var(--dark)';
+          resultEl.style.background = 'var(--accent)';
+        } else {
+          resultEl.textContent = 'Saída liberada';
+          // estilo: card escuro
+          resultEl.classList.add('nao');
+          resultEl.style.background = '';
+          resultEl.style.color = 'var(--accent)';
+        }
+
+        // mostrar botão de repetir
+        againBtn.style.display = 'inline-block';
+        // remove pulso após animação
+        setTimeout(()=>resultEl.classList.remove('pulse'), 400);
+      }, 700);
+    }
+
+    function resetView(){
+      const resultEl = document.getElementById('result');
+      resultEl.style.opacity = '0';
+      setTimeout(()=>{resultEl.style.visibility='hidden';}, 300);
+      document.getElementById('again').style.display = 'none';
+    }
+
+    function vibrateIfPossible(){ if(navigator.vibrate){ navigator.vibrate(35); } }
+  </script>
+</body>
+</html>
